@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: my-node-app
+    env: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    envVars:
+      - key: MONGO_URI
+        value: mongodb+srv://musaabkhan4511:RoQL2f0sLUiP96K8@cluster0.2konn.mongodb.net/
+      - key: JWT_SECRET
+        value: your_jwt_secret
+      - key: PORT
+        value: 5000
+      - key: GOOGLE_CLIENT_ID
+        value: 596625045737-805bt0j93teqea3crnsmvrdkqoc1m4hn.apps.googleusercontent.com
+      - key: GOOGLE_CLIENT_SECRET
+        value: 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
+    webService:
+      port: 5000
