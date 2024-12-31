@@ -1,55 +1,58 @@
 const express = require('express');
-const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const crypto= require('crypto');
 const User = require('../models/User');
 const router = express.Router();
+const axios = require('axios');
 
-const verifyGoogleToken = async (token) => {
-  const response = await fetch(
-    `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`
-  );
-  const data = await response.json();
-  return data;
-};
-
-// Google OAuth login - Accept token sent from frontend
-router.post('/google', async (req, res) => {
-  const { token } = req.body; // Get the Google ID token sent from the frontend
+router.post('/google-login', async (req, res) => {
+  const { tokenId } = req.body; // The token sent from the frontend (Google's token)
 
   try {
-    // Verify the token using Google's API
-    const googleUser = await verifyGoogleToken(token);
+    // Step 1: Verify the Google token
+    const googleResponse = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenId}`);
 
-    // Check if the user already exists in the database using Google ID
-    let user = await User.findOne({ googleId: googleUser.sub });
+    const { email, name,  sub: googleId } = googleResponse.data; // Extract user data from Google response
+    console.log(email)
+    // Step 2: Check if the user already exists in your database
+    let user = await User.findOne({ email });
+    
     if (!user) {
-      // If the user doesn't exist, create a new user
-
-      // Generate a random password using crypto (16 bytes = 32 hex chars)
-      const randomPassword = crypto.randomBytes(16).toString('hex');
-
-
+      // If the user does not exist, create a new one
       user = new User({
-        googleId: googleUser.sub,
-        username: googleUser.name,
-        email: googleUser.email,
-        password: randomPassword, // Store the hashed random password
+        email,
+        username: name,
+        googleId,
+        password: crypto.randomBytes(25).toString('hex'), // Since Google login doesn't require a password
       });
-      await user.save();
+      await user.save(); // Save the new user to the database
     }
 
-    // Generate JWT token for the user
-    const payload = { id: user._id, username: user.username };
-    const jwtToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '12h' });
+    // Step 3: Generate a JWT token for the user
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '12h' });
 
-    // Send the JWT token back to the frontend
-    res.json({ token: jwtToken });
+    // Step 4: Send the token back to the frontend
+    res.json({ token });
   } catch (error) {
     console.error('Error during Google login:', error);
-    res.status(500).send('Server error');
+    res.status(500).send('Internal server error');
   }
 });
+
+
+// // Signup
+// router.post('/signup', async (req, res) => {
+//   try {
+//     const { username, email, password } = req.body;
+//     console.log(password)
+//     const user = new User({ username, email, password });
+//     await user.save();
+//     res.status(201).send('User created successfully');
+//   } catch (err) {
+//     console.error(err);
+//     res.status(400).send('Error creating user');
+//   }
+// });
 
 // Signup
 router.post('/signup', async (req, res) => {
@@ -86,7 +89,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate JWT token after successful login
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '12h' });
 
     // Send the token back in the response
     res.json({ token });
