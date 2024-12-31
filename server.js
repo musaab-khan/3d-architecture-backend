@@ -11,7 +11,7 @@ const app = express();
 
 // Enable CORS
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow requests from your frontend
+  origin: ['http://localhost:3000',, 'https://3d-architecture.vercel.app'], // Allow requests from your frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
   credentials: true, // Allow cookies and credentials if needed
 }));
