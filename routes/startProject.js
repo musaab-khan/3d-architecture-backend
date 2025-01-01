@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
-const UserModel = require('../models/UserModels');
+const UserModel = require('../models/userModels');
 
 // Protected route to create a userModel
 router.post('/create-project', (req, res) => {
