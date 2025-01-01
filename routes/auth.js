@@ -106,7 +106,7 @@ router.get('/profile', (req, res) => {
   if (!token) return res.status(401).send('Access denied');
   
   try {
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     res.json({ message: 'Access granted', userId: decoded.id });
   } catch {
     res.status(401).send('Invalid token');
