@@ -48,7 +48,7 @@ router.post('/create-project', (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Destructure the request body
-    const { userId, name, dimensions, imgURL } = req.body;
+    const { userId, name, dimensions, imageUrl } = req.body;
 
     // Validate the request body
     if (!name || !dimensions || !Array.isArray(dimensions) || dimensions.length !== 2) {
@@ -59,12 +59,11 @@ router.post('/create-project', (req, res) => {
     // if (decoded.id !== userId) {
     //   return res.status(403).send('User ID mismatch. Unauthorized request.');
     // }
-    console.log('Decoded ID:', decoded.id);
     // Create the new model
     userModel.create({
       name,
       dimensions,
-      imgURL: imgURL || null, // Default to null if imgURL is not provided
+      imgURL: imageUrl,
       userId: decoded.id
     })
       .then((newModel) => {
