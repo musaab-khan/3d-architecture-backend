@@ -1,9 +1,10 @@
-// models/Models.js
+
 const mongoose = require('mongoose');
 
 const modelSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  tags: [{ type: String }], // Array of strings
+  tags: [{ type: String }],
+  dimensions: { type: [Number], required: true },
   imageUrl: { type: String, required: true },
 });
 

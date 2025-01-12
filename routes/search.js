@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const Models = require('../models/Models'); // Ensure the path is correct
 const userModel = require('../models/userModels'); // Ensure the path is correct
+const assetsSchema = require('../models/assetsCollection'); // Ensure the path is correct
 
 // Search Route
 router.get('/search', async (req, res) => {
@@ -79,5 +80,13 @@ router.post('/create-project', (req, res) => {
   }
 });
 
+router.get('/assets', async (req, res) => {
+  try {
+    const assets = await assetsSchema.find();
+    res.status(200).json(assets);
+  } catch (error) {
+    res.status(500).json({ error: 'An error occurred while fetching assets.' });
+  }
+});
 
 module.exports = router;
