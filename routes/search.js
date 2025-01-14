@@ -89,4 +89,118 @@ router.get('/assets', async (req, res) => {
   }
 });
 
+router.post('/update-model-json', async (req, res) => {
+  console.log(req.body);
+  const token = req.headers.authorization?.split(' ')[1]; // Extract JWT from header
+  if (!token) return res.status(401).send('Access denied');
+
+  try {
+    // Verify the JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Destructure the request body
+    const { projectID, modelJSON } = req.body;
+
+    // Validate the request body
+    if (!projectID || !modelJSON) {
+      return res.status(400).send('Invalid input. Please provide projectId and modelJSON.');
+    }
+
+    // Find the model by userId and projectId
+    const userModelInstance = await userModel.findOne({ userId: decoded.id, _id: projectID });
+
+    if (!userModelInstance) {
+      return res.status(404).send('Model not found or unauthorized access.');
+    }
+
+    // Update the modelJSON field
+    userModelInstance.modelJSON = modelJSON;
+    await userModelInstance.save();
+
+    res.status(200).json({
+      message: 'Model JSON updated successfully',
+      model: userModelInstance,
+    });
+  } catch (err) {
+    console.error('Error occurred:', err);
+
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).send('Invalid token');
+    }
+
+    res.status(500).send('Internal server error');
+  }
+});
+
+router.get('/get-model-json/:projectId', async (req, res) => {
+  // Get the projectId from the URL parameter
+  const { projectId } = req.params;
+
+  // Validate that projectId is provided
+  if (!projectId) {
+    return res.status(400).send('Project ID is required.');
+  }
+
+  try {
+    // Find the user model based on the projectId
+    const userModelInstance = await userModel.findOne({ _id: projectId });
+
+    // If no user model is found, return an error
+    if (!userModelInstance) {
+      return res.status(404).send('Model not found.');
+    }
+
+    // Return the found model as JSON
+    res.status(200).json({
+      message: 'Model retrieved successfully',
+      model: userModelInstance
+    });
+  } catch (err) {
+    console.error('Error occurred:', err);
+
+    res.status(500).send('Internal server error');
+  }
+});
+
+router.get('/models', async (req, res) => {
+  try {
+    // Extract token from the authorization header
+    const token = req.headers.authorization?.split(' ')[1]; // Extract JWT from header
+    if (!token) {
+      return res.status(401).json({ message: 'Access denied. Token is missing.' });
+    }
+
+    // Decode the JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;  // User ID decoded from the token
+
+    // Find all models by the userId
+    const userModels = await userModel.find({ userId });
+
+    if (!userModels || userModels.length === 0) {
+      return res.status(404).json({ message: 'No models found for this user.' });
+    }
+
+    // Extract necessary details (id, name, dimensions) for each model
+    const modelsData = userModels.map(model => ({
+      id: model._id,
+      name: model.name,
+      dimensions: model.dimensions
+    }));
+
+    // Send the response with the models data
+    return res.status(200).json({
+      message: 'User models retrieved successfully',
+      models: modelsData
+    });
+
+  } catch (err) {
+    console.error('Error occurred:', err);
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 module.exports = router;

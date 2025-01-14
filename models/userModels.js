@@ -5,6 +5,7 @@ const UserSchema = new mongoose.Schema({
   dimensions: { type: [Number], required: true },
   imgURL: { type: String, default: null },
   userId: { type: String, required: true },
+  modelJSON: {type: String, default: null}
 });
 
 // Use `mongoose.models` to avoid overwriting the model
