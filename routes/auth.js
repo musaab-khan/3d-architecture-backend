@@ -79,10 +79,10 @@ router.post('/signup', async (req, res) => {
     }
     
     // Check if username is already taken
-    const existingUserByUsername = await User.findOne({ username });
-    if (existingUserByUsername) {
-      return res.status(409).send('Username already taken');
-    }
+    // const existingUserByUsername = await User.findOne({ username });
+    // if (existingUserByUsername) {
+    //   return res.status(409).send('Username already taken');
+    // }
     
     const user = new User({ username, email, password });
     await user.save();
