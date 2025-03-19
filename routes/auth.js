@@ -70,34 +70,51 @@ router.post('/google-login', async (req, res) => {
 router.post('/signup', async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    console.log(password);
+    console.log('Password received:', password ? 'Yes' : 'No');
+    
+    if (!email || !username || !password) {
+      return res.status(400).send('All fields are required');
+    }
     
     // Check if user with this email already exists
     const existingUserByEmail = await User.findOne({ email });
     if (existingUserByEmail) {
+      console.log('Email already exists:', email);
       return res.status(409).send('User with this email already exists');
     }
     
     // Check if username is already taken
-    // const existingUserByUsername = await User.findOne({ username });
-    // if (existingUserByUsername) {
-    //   return res.status(409).send('Username already taken');
-    // }
+    const existingUserByUsername = await User.findOne({ username });
+    if (existingUserByUsername) {
+      console.log('Username already taken:', username);
+      return res.status(409).send('Username already taken');
+    }
     
+    // Create and save the new user
     const user = new User({ username, email, password });
     await user.save();
+    console.log('User created successfully:', email);
     res.status(201).send('User created successfully');
   } catch (err) {
-    console.error(err);
+    console.error('Error in signup route:', err);
     
     // Check if error is a MongoDB duplicate key error
-    if (err.code === 11000) {
+    if (err.name === 'MongoServerError' && err.code === 11000) {
       // Extract the duplicated field from the error message
       const field = Object.keys(err.keyPattern)[0];
+      console.log(`Duplicate key error for field: ${field}`);
       return res.status(409).send(`User with this ${field} already exists`);
     }
     
-    res.status(400).send('Error creating user');
+    // Handle validation errors
+    if (err.name === 'ValidationError') {
+      const errorMessages = Object.values(err.errors).map(e => e.message);
+      console.log('Validation error:', errorMessages);
+      return res.status(400).send(errorMessages.join(', '));
+    }
+    
+    console.log('Generic error creating user');
+    res.status(500).send('Error creating user');
   }
 });
 
