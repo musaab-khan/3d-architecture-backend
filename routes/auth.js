@@ -55,15 +55,48 @@ router.post('/google-login', async (req, res) => {
 // });
 
 // Signup
+// router.post('/signup', async (req, res) => {
+//   try {
+//     const { username, email, password } = req.body;
+//     console.log(password)
+//     const user = new User({ username, email, password });
+//     await user.save();
+//     res.status(201).send('User created successfully');
+//   } catch (err) {
+//     console.error(err);
+//     res.status(400).send('Error creating user');
+//   }
+// });
 router.post('/signup', async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    console.log(password)
+    console.log(password);
+    
+    // Check if user with this email already exists
+    const existingUserByEmail = await User.findOne({ email });
+    if (existingUserByEmail) {
+      return res.status(409).send('User with this email already exists');
+    }
+    
+    // Check if username is already taken
+    const existingUserByUsername = await User.findOne({ username });
+    if (existingUserByUsername) {
+      return res.status(409).send('Username already taken');
+    }
+    
     const user = new User({ username, email, password });
     await user.save();
     res.status(201).send('User created successfully');
   } catch (err) {
     console.error(err);
+    
+    // Check if error is a MongoDB duplicate key error
+    if (err.code === 11000) {
+      // Extract the duplicated field from the error message
+      const field = Object.keys(err.keyPattern)[0];
+      return res.status(409).send(`User with this ${field} already exists`);
+    }
+    
     res.status(400).send('Error creating user');
   }
 });
